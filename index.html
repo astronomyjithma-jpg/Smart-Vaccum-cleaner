@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoSweep — Smart Vacuum Cleaner Project</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg:        #06080b;
+    --surface:   #0c1017;
+    --card:      #101620;
+    --border:    #1e2a38;
+    --line:      rgba(255,255,255,0.06);
+    --cyan:      #3df0c2;
+    --cyan-dim:  rgba(61,240,194,0.12);
+    --cyan-glow: rgba(61,240,194,0.06);
+    --white:     #e8eef6;
+    --muted:     #4e6075;
+    --soft:      #8a9db5;
+    --mono:      'DM Mono', monospace;
+    --display:   'Syne', sans-serif;
+    --body:      'Inter', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--body);
+    background: var(--bg);
+    color: var(--white);
+    overflow-x: hidden;
+    line-height: 1.6;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 5%;
+    height: 64px;
+    background: rgba(6,8,11,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--cyan);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .nav-links {
+    list-style: none;
+    display: flex;
+    gap: 2.5rem;
+  }
+
+  .nav-links a {
+    color: var(--soft);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--white); }
+
+  .nav-cta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--cyan);
+    border: 1px solid rgba(61,240,194,0.3);
+    padding: 6px 16px;
+    border-radius: 2px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* ── HERO ── */
+  #hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 4rem;
+    padding: 120px 5% 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Background topographic lines */
+  #hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse 70% 80% at 70% 50%, rgba(61,240,194,0.04) 0%, transparent 60%),
+      repeating-linear-gradient(0deg, transparent, transparent 79px, var(--line) 79px, var(--line) 80px),
+      repeating-linear-gradient(90deg, transparent, transparent 79px, var(--line) 79px, var(--line) 80px);
+    pointer-events: none;
+  }
+
+  .hero-left { position: relative; z-index: 2; }
+
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--cyan);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+  }
+
+  .hero-tag::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: var(--cyan);
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(2.8rem, 5vw, 4.4rem);
+    font-weight: 800;
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.5rem;
+  }
+
+  h1 em {
+    font-style: normal;
+    color: var(--cyan);
+  }
+
+  .hero-desc {
+    font-size: 15px;
+    color: var(--soft);
+    max-width: 420px;
+    line-height: 1.8;
+    margin-bottom: 2.5rem;
+    font-weight: 300;
+  }
+
+  .cta-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .btn-fill {
+    background: var(--cyan);
+    color: #06080b;
+    border: none;
+    padding: 13px 28px;
+    font-family: var(--body);
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 2px;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    text-decoration: none;
+    display: inline-block;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  .btn-fill:hover { opacity: 0.85; transform: translateY(-1px); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--soft);
+    border: 1px solid var(--border);
+    padding: 13px 28px;
+    font-family: var(--body);
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 2px;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    text-decoration: none;
+    display: inline-block;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .btn-ghost:hover { color: var(--white); border-color: var(--soft); }
+
+  /* Hero visual — floor map */
+  .hero-right {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .map-container {
+    position: relative;
+    width: 380px;
+    height: 380px;
+  }
+
+  .map-bg {
+    width: 100%;
+    height: 100%;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--surface);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Simulated floor grid cells */
+  .map-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  .map-path {
+    position: absolute;
+    inset: 20px;
+    border: 1px solid rgba(61,240,194,0.25);
+    border-radius: 2px;
+  }
+
+  .map-visited {
+    position: absolute;
+    background: rgba(61,240,194,0.06);
+    border: none;
+  }
+
+  .v1 { top: 20px; left: 20px; width: 200px; height: 120px; }
+  .v2 { top: 20px; left: 220px; width: 140px; height: 80px; }
+  .v3 { top: 140px; left: 20px; width: 340px; height: 80px; }
+  .v4 { top: 220px; left: 20px; width: 160px; height: 140px; }
+
+  /* Robot dot */
+  .robot-dot {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 0 6px rgba(61,240,194,0.15), 0 0 0 12px rgba(61,240,194,0.05);
+    top: 82px;
+    left: 82px;
+    animation: rove 6s ease-in-out infinite;
+  }
+
+  @keyframes rove {
+    0%   { top: 40px;  left: 40px; }
+    20%  { top: 40px;  left: 220px; }
+    40%  { top: 160px; left: 220px; }
+    60%  { top: 160px; left: 40px; }
+    80%  { top: 240px; left: 40px; }
+    100% { top: 40px;  left: 40px; }
+  }
+
+  /* Scan trail */
+  .scan-line {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, var(--cyan) 50%, transparent 100%);
+    opacity: 0.3;
+    animation: scan 3s linear infinite;
+  }
+
+  @keyframes scan {
+    0%   { top: 0; opacity: 0; }
+    10%  { opacity: 0.3; }
+    90%  { opacity: 0.3; }
+    100% { top: 100%; opacity: 0; }
+  }
+
+  /* Map label */
+  .map-label {
+    position: absolute;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--cyan);
+    letter-spacing: 0.1em;
+    top: 8px;
+    left: 12px;
+    opacity: 0.6;
+  }
+
+  /* Stat strips beside map */
+  .map-stats {
+    position: absolute;
+    right: -130px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .mstat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 12px 16px;
+    min-width: 110px;
+  }
+
+  .mstat-val {
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--cyan);
+    display: block;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .mstat-lbl {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* ── SECTION BASE ── */
+  section {
+    padding: 100px 5%;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .sec-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--cyan);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .sec-tag::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+    max-width: 60px;
+  }
+
+  h2 {
+    font-family: var(--display);
+    font-size: clamp(1.9rem, 3vw, 2.8rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+  }
+
+  .sec-sub {
+    font-size: 15px;
+    color: var(--soft);
+    max-width: 500px;
+    margin-bottom: 3.5rem;
+    font-weight: 300;
+    line-height: 1.8;
+  }
+
+  hr.divider {
+    border: none;
+    border-top: 1px solid var(--line);
+    margin: 0 5%;
+  }
+
+  /* ── FEATURES ── */
+  .feat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .feat {
+    background: var(--card);
+    padding: 32px 28px;
+    transition: background 0.2s;
+    position: relative;
+  }
+
+  .feat:hover { background: #131d28; }
+
+  .feat-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    margin-bottom: 20px;
+    display: block;
+  }
+
+  .feat-title {
+    font-family: var(--display);
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    line-height: 1.3;
+    color: var(--white);
+  }
+
+  .feat-desc {
+    font-size: 13px;
+    color: var(--soft);
+    line-height: 1.7;
+    font-weight: 300;
+  }
+
+  .feat-tag {
+    display: inline-block;
+    margin-top: 16px;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--cyan);
+    letter-spacing: 0.1em;
+    background: var(--cyan-dim);
+    padding: 3px 8px;
+    border-radius: 2px;
+  }
+
+  /* ── HOW IT WORKS ── */
+  .how-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5rem;
+    align-items: start;
+  }
+
+  .steps { display: flex; flex-direction: column; }
+
+  .step {
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    gap: 20px;
+    padding-bottom: 40px;
+    position: relative;
+  }
+
+  .step:last-child { padding-bottom: 0; }
+
+  .step-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .step-n {
+    width: 36px;
+    height: 36px;
+    border: 1px solid rgba(61,240,194,0.35);
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--cyan);
+    flex-shrink: 0;
+    background: var(--cyan-dim);
+  }
+
+  .step-connector {
+    width: 1px;
+    flex: 1;
+    margin-top: 6px;
+    background: linear-gradient(to bottom, rgba(61,240,194,0.25), transparent);
+    min-height: 24px;
+  }
+
+  .step:last-child .step-connector { display: none; }
+
+  .step-body { padding-top: 6px; }
+
+  .step-title {
+    font-family: var(--display);
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--white);
+  }
+
+  .step-desc {
+    font-size: 13px;
+    color: var(--soft);
+    line-height: 1.7;
+    font-weight: 300;
+  }
+
+  .step-chip {
+    display: inline-block;
+    margin-top: 8px;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    border-radius: 2px;
+  }
+
+  /* Architecture diagram right side */
+  .arch-diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 28px;
+    position: sticky;
+    top: 90px;
+  }
+
+  .arch-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .arch-layers {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .arch-layer {
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--card);
+    transition: border-color 0.2s;
+  }
+
+  .arch-layer:hover { border-color: rgba(61,240,194,0.3); }
+
+  .arch-layer-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--white);
+  }
+
+  .arch-layer-tech {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--cyan);
+    opacity: 0.7;
+  }
+
+  .arch-arrow {
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    padding: 2px 0;
+    letter-spacing: 0.1em;
+  }
+
+  /* ── TEAM ── */
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .member {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 28px 20px 24px;
+    text-align: center;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .member:hover { border-color: rgba(61,240,194,0.2); transform: translateY(-3px); }
+
+  .avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--cyan-dim);
+    border: 1px solid rgba(61,240,194,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--cyan);
+    margin: 0 auto 16px;
+  }
+
+  .member-name {
+    font-family: var(--display);
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: var(--white);
+  }
+
+  .member-role {
+    font-size: 12px;
+    color: var(--soft);
+    font-weight: 300;
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+
+  .member-dept {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--cyan);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: 1px solid rgba(61,240,194,0.2);
+    padding: 3px 10px;
+    border-radius: 2px;
+    background: var(--cyan-dim);
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 32px 5%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .footer-logo {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .footer-right {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    #hero { grid-template-columns: 1fr; padding-top: 100px; }
+    .hero-right { display: none; }
+    .feat-grid { grid-template-columns: 1fr 1fr; }
+    .how-layout { grid-template-columns: 1fr; }
+    .arch-diagram { position: static; }
+    .team-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 600px) {
+    .feat-grid { grid-template-columns: 1fr; }
+    .team-grid { grid-template-columns: 1fr 1fr; }
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <span class="logo">AutoSweep · v1.0</span>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how">Architecture</a></li>
+    <li><a href="#team">Team</a></li>
+  </ul>
+  <span class="nav-cta"> FOC.WD66· 2026</span>
+</nav>
+
+<!-- HERO -->
+<section id="hero" style="max-width:100%; padding-left:5%; padding-right:5%;">
+  <div class="hero-left">
+    <p class="hero-tag">Smart Cleaning for a Smarter Future</p>
+    <h1>A robot that maps,<br>learns, and <em>cleans.</em></h1>
+    <p class="hero-desc">AutoSweep is an autonomous vacuum system built from scratch — fusing LiDAR, ultrasonic sensing, and embedded machine learning to navigate unknown floors with zero human input.</p>
+    <div class="cta-row">
+      <a href="#how" class="btn-fill">How it works</a>
+      <a href="#features" class="btn-ghost">See features</a>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="map-container">
+      <div class="map-bg">
+        <div class="map-grid"></div>
+        <div class="map-visited v1"></div>
+        <div class="map-visited v2"></div>
+        <div class="map-visited v3"></div>
+        <div class="map-visited v4"></div>
+        <div class="map-path"></div>
+        <div class="scan-line"></div>
+        <div class="robot-dot"></div>
+        <span class="map-label">LIVE · OCCUPANCY MAP</span>
+      </div>
+      <div class="map-stats">
+        <div class="mstat">
+          <span class="mstat-val">98%</span>
+          <span class="mstat-lbl">Coverage</span>
+        </div>
+        <div class="mstat">
+          <span class="mstat-val">12ms</span>
+          <span class="mstat-lbl">Latency</span>
+        </div>
+        <div class="mstat">
+          <span class="mstat-val">±2cm</span>
+          <span class="mstat-lbl">Accuracy</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- FEATURES -->
+<section id="features">
+  <p class="sec-tag">Capabilities</p>
+  <h2>What AutoSweep can do.</h2>
+  <p class="sec-sub">Every subsystem designed and built by our team — hardware, firmware, and software working as one.</p>
+
+  <div class="feat-grid">
+    <div class="feat">
+      <span class="feat-num">F — 01</span>
+      <div class="feat-title">Real-time SLAM mapping</div>
+      <p class="feat-desc">Builds and updates a complete floor plan of unknown rooms while navigating, using GMapping with wheel-odometry fusion.</p>
+      <span class="feat-tag">GMapping · ROS2</span>
+    </div>
+    <div class="feat">
+      <span class="feat-num">F — 02</span>
+      <div class="feat-title">Multi-sensor fusion</div>
+      <p class="feat-desc">LiDAR, ultrasonic, and IR sensors are merged through a Kalman filter for robust, low-noise obstacle detection at 10 Hz.</p>
+      <span class="feat-tag">Kalman filter · STM32</span>
+    </div>
+    <div class="feat">
+      <span class="feat-num">F — 03</span>
+      <div class="feat-title">Adaptive path planning</div>
+      <p class="feat-desc">A* search over a boustrophedon-decomposed grid finds the shortest coverage path and replans when obstacles appear.</p>
+      <span class="feat-tag">A* · Coverage planning</span>
+    </div>
+    <div class="feat">
+      <span class="feat-num">F — 04</span>
+      <div class="feat-title">Surface-aware ML</div>
+      <p class="feat-desc">A TFLite classifier running on-device detects floor type — carpet, tile, hardwood — and adjusts suction and speed in real time.</p>
+      <span class="feat-tag">TFLite · Edge ML</span>
+    </div>
+    <div class="feat">
+      <span class="feat-num">F — 05</span>
+      <div class="feat-title">Wi-Fi telemetry</div>
+      <p class="feat-desc">Live sensor readings, battery state, and map progress stream to a web dashboard over MQTT for real-time remote monitoring.</p>
+      <span class="feat-tag">MQTT · ESP32</span>
+    </div>
+    <div class="feat">
+      <span class="feat-num">F — 06</span>
+      <div class="feat-title">Auto-dock & recharge</div>
+      <p class="feat-desc">When battery drops below threshold, the robot navigates autonomously back to its docking station using stored map data.</p>
+      <span class="feat-tag">PID control · IR beacon</span>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <p class="sec-tag">System architecture</p>
+  <h2>From photon to clean floor.</h2>
+  <p class="sec-sub">Four tightly integrated processing layers — each one feeding the next — produce reliable autonomous behaviour.</p>
+
+  <div class="how-layout">
+    <div class="steps">
+      <div class="step">
+        <div class="step-col">
+          <div class="step-n">01</div>
+          <div class="step-connector"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-title">Perception</div>
+          <p class="step-desc">LiDAR and ultrasonic sensors sweep at 10 Hz. A Kalman filter merges the streams into a clean, noise-reduced point cloud accurate to ±2 cm.</p>
+          <span class="step-chip">STM32 · 10 Hz fusion loop</span>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-col">
+          <div class="step-n">02</div>
+          <div class="step-connector"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-title">Localization</div>
+          <p class="step-desc">GMapping SLAM processes the point cloud alongside wheel-odometry to maintain a continuous pose estimate on a growing occupancy grid.</p>
+          <span class="step-chip">ROS2 · GMapping SLAM</span>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-col">
+          <div class="step-n">03</div>
+          <div class="step-connector"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-title">Planning</div>
+          <p class="step-desc">Free space is decomposed into cells. A* computes energy-efficient coverage paths and replans dynamically when new obstacles are detected.</p>
+          <span class="step-chip">A* · Boustrophedon decomposition</span>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-col">
+          <div class="step-n">04</div>
+          <div class="step-connector"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-title">Actuation</div>
+          <p class="step-desc">Velocity commands drive dual DC motors via PID controllers. The on-device TFLite model classifies surface type and adjusts suction power in real time.</p>
+          <span class="step-chip">PID control · TFLite edge inference</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Architecture diagram -->
+    <div class="arch-diagram">
+      <p class="arch-label">Software stack</p>
+      <div class="arch-layers">
+        <div class="arch-layer">
+          <span class="arch-layer-name">Web dashboard</span>
+          <span class="arch-layer-tech">React · MQTT.js</span>
+        </div>
+        <div class="arch-arrow">↕ MQTT / Wi-Fi</div>
+        <div class="arch-layer">
+          <span class="arch-layer-name">ROS2 middleware</span>
+          <span class="arch-layer-tech">Humble · DDS</span>
+        </div>
+        <div class="arch-arrow">↕ ROS2 topics</div>
+        <div class="arch-layer">
+          <span class="arch-layer-name">SLAM + planner</span>
+          <span class="arch-layer-tech">GMapping · A*</span>
+        </div>
+        <div class="arch-arrow">↕ serial / SPI</div>
+        <div class="arch-layer">
+          <span class="arch-layer-name">Sensor fusion</span>
+          <span class="arch-layer-tech">Kalman · STM32</span>
+        </div>
+        <div class="arch-arrow">↕ GPIO / PWM</div>
+        <div class="arch-layer">
+          <span class="arch-layer-name">Motors + sensors</span>
+          <span class="arch-layer-tech">LiDAR · HC-SR04 · DC</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- TEAM -->
+<section id="team">
+  <p class="sec-tag">The team</p>
+  <h2>Built by Group 66.</h2>
+  <p class="sec-sub">First-year undergraduates, Faculty of Computing. Replace the names and roles below with your actual group members.</p>
+
+  <div class="team-grid">
+    <div class="member">
+      <div class="avatar">AS</div>
+      <div class="member-name">A. Silva</div>
+      <div class="member-role">Team lead & embedded systems</div>
+      <span class="member-dept">Hardware</span>
+    </div>
+    <div class="member">
+      <div class="avatar">RP</div>
+      <div class="member-name">R. Perera</div>
+      <div class="member-role">SLAM & path planning</div>
+      <span class="member-dept">Software</span>
+    </div>
+    <div class="member">
+      <div class="avatar">NK</div>
+      <div class="member-name">N. Karunaratne</div>
+      <div class="member-role">Sensor fusion & firmware</div>
+      <span class="member-dept">Firmware</span>
+    </div>
+    <div class="member">
+      <div class="avatar">MF</div>
+      <div class="member-name">M. Fernando</div>
+      <div class="member-role">ML model & dashboard</div>
+      <span class="member-dept">ML / UI</span>
+    </div>
+    <div class="member">
+      <div class="avatar">MF</div>
+      <div class="member-name">M. Fernando</div>
+      <div class="member-role">ML model & dashboard</div>
+      <span class="member-dept">ML / UI</span>
+    </div>
+    <div class="member">
+      <div class="avatar">MF</div>
+      <div class="member-name">M. Fernando</div>
+      <div class="member-role">ML model & dashboard</div>
+      <span class="member-dept">ML / UI</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span class="footer-logo">AutoSweep · Smart Vacuum Cleaner Project</span>
+  <span class="footer-right">University First Year Project · 2024</span>
+</footer>
+
+</body>
+</html>
